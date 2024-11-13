@@ -4,25 +4,23 @@ import random
 from numpy.linalg import matrix_rank
 from math import sqrt
 
-#classic施密特正交化实现的QR分解
-#可以应用于非方阵！！！
-#其中Q:正交矩阵（行大于等于列），R:上三角矩阵
+#modified施密特正交化实现的QR分解
 def QR_Factor(A,isprint=False):
     m, n = A.shape
     Q = np.copy(A)
     R = np.zeros([n, n], dtype='float64')
-    for i in range(n):
-        norm=vector_norm(Q[:, i])
-        R[i, i] = norm
-        if np.abs(R[i, i]) < 1e-15:
-            Q[:, i] = np.zeros(m, dtype='float64')
-            R[i, i] = 0.
+    for k in range(n):
+        norm=vector_norm(Q[:, k])
+        R[k, k] = norm
+        if np.abs(R[k, k]) < 1e-15:
+            Q[:, k] = np.zeros(m, dtype='float64')
+            R[k, k] = 0.
         else:
-            Q[:, i] = Q[:, i]/norm
-
-        R[[i], i+1:] = Q[:, [i]].T@(Q[:, i+1:])
-        Q[:, i+1:] -= Q[:, [i]]@(R[[i], i+1:])
-        print(f"第{i}步，Q:{Q}\n R:{R}\n")
+            Q[:, k] = Q[:, k]/norm
+        uk_last=Q[:, [k]]
+        R[[k], k+1:] = uk_last.T@(Q[:, k+1:])
+        Q[:, k+1:] -= uk_last@(R[[k], k+1:])
+        print(f"第{k}步，Q:{Q}\n R:{R}\n")
     return Q, R
 def create_Tpq_A(n, p, q, c, s):
     T_pq = np.eye(n)#, dtype=complex
@@ -55,13 +53,10 @@ def Givens_Reduction(A):
             R=P_ij@R
             print(f"第i步骤P({rowi},{columnj})={P_ij}\n R:={R}\n ")
 
-    #由于要求:求矩阵分解，所以转化为QR分解的形式
-    Q_A=Q.T#由于P:正交方阵，所以转置=逆
-
+    Q_A=Q.T
     return Q_A,R
 
 def vector_norm(vector):
-    # 使用numpy的dot计算向量内积，再开平方根得到模长
     return sqrt(np.dot(vector, vector))
 def normalize_vector(vector):
     # 计算向量的模长
@@ -69,11 +64,8 @@ def normalize_vector(vector):
     if norm == 0:# 如果模长为0，返回原0向量
         return vector
     return vector / norm
-#对称矩阵实现的正交规约 PA=T
-#可以应用于非方阵！！！
-#其中P:正交矩阵(方阵)，T:伪上三角矩阵（可以不:方阵）
+
 def Householder_Reduction(A,isprint=True):
-    #矩阵运算都用numpy来处理
     A=np.array(A).astype(np.float32)
     (len_r,len_c)=A.shape
 
@@ -119,10 +111,6 @@ def is_solvable(A,b):
     #如果增广矩阵的秩等于A的秩就有解
     return matrix_rank(A)==matrix_rank(Ab)
 
-#输入的Q可能不:方阵
-
-
-#结果可能:最小二乘解！！！！！
 def solve_A(Q,R,b):
     n=R.shape[1]
     #等价于求解 Rx=Q.Tb
