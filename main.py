@@ -3,24 +3,39 @@ import numpy as np
 import random
 from numpy.linalg import matrix_rank
 from math import sqrt
-
+def vector_norm(vector):
+    return sqrt(np.dot(vector, vector))
+def normalize_vector(vector):
+    # 计算向量的模长
+    norm = vector_norm(vector)
+    if norm == 0:# 如果模长为0，返回原0向量
+        return vector
+    return vector / norm
 #modified施密特正交化实现的QR分解
 def QR_Factor(A,isprint=False):
     m, n = A.shape
     Q = np.copy(A)
+    E=[]
     R = np.zeros([n, n], dtype='float64')
-    for k in range(n):
-        norm=vector_norm(Q[:, k])
+    norm=vector_norm(Q[:, 0])
+    Q[:, 0] = normalize_vector(Q[:, 0])
+    R[0, 0] = norm
+    R[0,1:]= (Q[:, 0] .T)@A[:, 1:]
+    print(f"第1步，Q:{Q}\n R:{R}\n")
+    for k in range(1,n):
+        uk_last=Q[:, [k-1]]
+        uk=A[:, k]
+        Ek=np.eye(n)-uk_last@uk_last.T
+        E.append(Ek)
+        for i in range(k):#应该还有更简便的完全按照模和内积43页
+            uk=E[i]@uk
+        norm=vector_norm(uk)
+        uk=normalize_vector(uk)
+        Q[:, k]=uk
         R[k, k] = norm
-        if np.abs(R[k, k]) < 1e-15:
-            Q[:, k] = np.zeros(m, dtype='float64')
-            R[k, k] = 0.
-        else:
-            Q[:, k] = Q[:, k]/norm
-        uk_last=Q[:, [k]]
-        R[[k], k+1:] = uk_last.T@(Q[:, k+1:])
-        Q[:, k+1:] -= uk_last@(R[[k], k+1:])
-        print(f"第{k}步，Q:{Q}\n R:{R}\n")
+        R[k,k+1:]= (uk.T)@A[:, k+1:]
+
+        print(f"第{k+1}步，Q:{Q}\n R:{R}\n")
     return Q, R
 def create_Tpq_A(n, p, q, c, s):
     T_pq = np.eye(n)#, dtype=complex
@@ -56,14 +71,7 @@ def Givens_Reduction(A):
     Q_A=Q.T
     return Q_A,R
 
-def vector_norm(vector):
-    return sqrt(np.dot(vector, vector))
-def normalize_vector(vector):
-    # 计算向量的模长
-    norm = vector_norm(vector)
-    if norm == 0:# 如果模长为0，返回原0向量
-        return vector
-    return vector / norm
+
 
 def Householder_Reduction(A,isprint=True):
     A=np.array(A).astype(np.float32)
@@ -155,7 +163,7 @@ ap = argparse.ArgumentParser(description="""完成课堂上讲的关于矩阵正
 ap.add_argument("--model", type=str, choices=['Schmid','Houshold','Givens'], default="Schmid",
                 help="包括Modified Gram-Schmid方法，Houshold reduction和Givens reduction方法, \
                      Schmid','Houshold','Givens',")
-ap.add_argument("--precision", type=str, default="2",
+ap.add_argument("--precision", type=str, default="20",
                 help="小数点精度")
 args = ap.parse_args()
 
@@ -163,10 +171,21 @@ args = ap.parse_args()
 if __name__ == "__main__":
     #控制小数点精度
     np.set_printoptions(precision=int(args.precision),suppress=True)
-    A=np.array([
+
+    A1=np.array([
     [1,19,-34],
     [-2,-5,20],
     [2,8,37]
+    ], dtype='float64')
+    A=np.array([
+    [1,1,1],
+    [0.001,0.001,0],
+    [0.001,0,0.001]
+    ], dtype='float64')
+    A=np.array([
+    [0,-20,-14],
+    [3,27,-4],
+    [4,11,-2]
     ], dtype='float64')
     b=np.array([100,0.01,0.05], dtype='float64')
     m, n = A.shape

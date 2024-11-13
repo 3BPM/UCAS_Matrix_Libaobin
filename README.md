@@ -10,3 +10,4 @@
 
 [国科大UCAS 2022年矩阵分析李保滨往年题+课程作业答案_李保滨矩阵分析作业答案-CSDN博客](https://blog.csdn.net/qq_42455246/article/details/128607832)
 
+编程大作业main.py修改后的施密特完全按照ppt 其余两个参考了一些
